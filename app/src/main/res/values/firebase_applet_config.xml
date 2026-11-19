@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-eduflown-a2988709-421d-4394-8c35-a6b300c9f670</string>
+    <string name="recaptcha_site_key" translatable="false">6LcQIyguAAAAANtq-eUw_q119DIf4nky-UeCcgFl</string>
+</resources>

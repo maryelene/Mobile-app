@@ -1,0 +1,6 @@
+{
+  "name": "EduFlow Notes",
+  "description": "Organize class notes, extract editable text from printed pages or handwriting, highlight key definitions, and study clean subject reviewers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

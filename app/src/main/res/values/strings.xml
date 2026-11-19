@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">EduFlow Notes</string>
+    <string name="auth_tagline">Snap study pages, highlight key terms, and review smarter.</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_out">Sign out</string>
+    <string name="tab_subjects">Subjects</string>
+    <string name="tab_capture">Notes</string>
+    <string name="tab_reviewer">Reviewer</string>
+    <string name="new_subject">New Subject</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="pick_photo">Choose Photo</string>
+    <string name="type_note">Type Note</string>
+    <string name="extracting_text">Reading page &amp; extracting text…</string>
+    <string name="save_note">Save Note</string>
+    <string name="highlight_definition">Highlight Definition</string>
+    <string name="quiz_mode">Quiz Mode</string>
+</resources>

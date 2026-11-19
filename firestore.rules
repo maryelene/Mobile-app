@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTagList(tags) {
+      return tags is list &&
+             tags.size() <= 10 &&
+             (tags.size() == 0 || (tags[0] is string && tags[0].size() >= 1 && tags[0].size() <= 32));
+    }
+
+    function isValidSubject(data) {
+      return data.userId is string &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 50 &&
+             data.colorKey in ['COBALT', 'SAGE', 'AMBER', 'CORAL', 'LAVENDER', 'TEAL'] &&
+             data.iconKey in ['SCIENCE', 'HISTORY', 'MATH', 'LITERATURE', 'LANGUAGE', 'GENERAL'];
+    }
+
+    function isValidNote(data) {
+      return data.userId is string &&
+             isValidId(data.subjectId) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.extractedText is string && data.extractedText.size() <= 20000 &&
+             data.sourceType in ['PRINTED', 'HANDWRITING', 'TYPED'] &&
+             isValidTagList(data.tags) &&
+             (!('photoFileName' in data) || (data.photoFileName is string && data.photoFileName.size() <= 128));
+    }
+
+    function isValidDefinition(data) {
+      return data.userId is string &&
+             isValidId(data.subjectId) &&
+             isValidId(data.noteId) &&
+             data.term is string && data.term.size() >= 1 && data.term.size() <= 120 &&
+             data.definition is string && data.definition.size() >= 1 && data.definition.size() <= 1000 &&
+             data.highlightColor in ['YELLOW', 'MINT', 'CORAL', 'SKY'] &&
+             data.startOffset is int && data.startOffset >= -1 && data.startOffset <= 20000 &&
+             data.endOffset is int && data.endOffset >= -1 && data.endOffset <= 20000 &&
+             isValidTagList(data.tags) &&
+             data.mastered is bool;
+    }
+
+    match /users/{userId}/subjects/{subjectId} {
+      allow get: if isOwner(userId) && isValidId(subjectId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(subjectId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll(['userId', 'name', 'colorKey', 'iconKey', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'name', 'colorKey', 'iconKey', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidSubject(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(subjectId) &&
+                       isValidSubject(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'colorKey', 'iconKey', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(subjectId);
+    }
+
+    match /users/{userId}/notes/{noteId} {
+      allow get: if isOwner(userId) && isValidId(noteId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(noteId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll(['userId', 'subjectId', 'title', 'extractedText', 'sourceType', 'tags', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'subjectId', 'title', 'extractedText', 'sourceType', 'tags', 'photoFileName', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidNote(incoming()) &&
+                       exists(/databases/$(database)/documents/users/$(userId)/subjects/$(incoming().subjectId));
+
+      allow update: if isOwner(userId) &&
+                       isValidId(noteId) &&
+                       isValidNote(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['subjectId', 'title', 'extractedText', 'sourceType', 'tags', 'photoFileName', 'updatedAt']) &&
+                       exists(/databases/$(database)/documents/users/$(userId)/subjects/$(incoming().subjectId));
+
+      allow delete: if isOwner(userId) && isValidId(noteId);
+    }
+
+    match /users/{userId}/definitions/{definitionId} {
+      allow get: if isOwner(userId) && isValidId(definitionId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(definitionId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll(['userId', 'subjectId', 'noteId', 'term', 'definition', 'highlightColor', 'startOffset', 'endOffset', 'tags', 'mastered', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'subjectId', 'noteId', 'term', 'definition', 'highlightColor', 'startOffset', 'endOffset', 'tags', 'mastered', 'createdAt', 'updatedAt']) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidDefinition(incoming()) &&
+                       exists(/databases/$(database)/documents/users/$(userId)/subjects/$(incoming().subjectId)) &&
+                       exists(/databases/$(database)/documents/users/$(userId)/notes/$(incoming().noteId));
+
+      allow update: if isOwner(userId) &&
+                       isValidId(definitionId) &&
+                       isValidDefinition(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().noteId == existing().noteId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['mastered', 'updatedAt']) ||
+                         (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['subjectId', 'term', 'definition', 'highlightColor', 'startOffset', 'endOffset', 'tags', 'mastered', 'updatedAt']) &&
+                           exists(/databases/$(database)/documents/users/$(userId)/subjects/$(incoming().subjectId))
+                         )
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(definitionId);
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "entities": {
+    "Subject": {
+      "title": "Subject",
+      "description": "A school subject folder organizing notes, tagged photos, and highlighted definitions.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the subject (1-50 chars)."
+        },
+        "colorKey": {
+          "type": "string",
+          "enum": ["COBALT", "SAGE", "AMBER", "CORAL", "LAVENDER", "TEAL"],
+          "description": "Accent color key for the subject card."
+        },
+        "iconKey": {
+          "type": "string",
+          "enum": ["SCIENCE", "HISTORY", "MATH", "LITERATURE", "LANGUAGE", "GENERAL"],
+          "description": "Icon category key for the subject."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": ["userId", "name", "colorKey", "iconKey", "createdAt", "updatedAt"]
+    },
+    "StudyNote": {
+      "title": "StudyNote",
+      "description": "An organized class or research note with extracted editable text and optional local tagged photo reference.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Document ID of the parent Subject."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the study note (1-120 chars)."
+        },
+        "extractedText": {
+          "type": "string",
+          "description": "Editable extracted text from printed pages, clean handwriting, or typed entry."
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["PRINTED", "HANDWRITING", "TYPED"],
+          "description": "Origin of the note text."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Up to 10 topic or exam tags for the note and attached photo."
+        },
+        "photoFileName": {
+          "type": "string",
+          "description": "Optional local filename for the attached study page photo."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": ["userId", "subjectId", "title", "extractedText", "sourceType", "tags", "createdAt", "updatedAt"]
+    },
+    "KeyDefinition": {
+      "title": "KeyDefinition",
+      "description": "A highlighted key term and definition extracted or marked on screen for subject review.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "subjectId": {
+          "type": "string",
+          "description": "Document ID of the parent Subject."
+        },
+        "noteId": {
+          "type": "string",
+          "description": "Document ID of the source StudyNote."
+        },
+        "term": {
+          "type": "string",
+          "description": "Key term or concept name (1-120 chars)."
+        },
+        "definition": {
+          "type": "string",
+          "description": "Definition or explanation text (1-1000 chars)."
+        },
+        "highlightColor": {
+          "type": "string",
+          "enum": ["YELLOW", "MINT", "CORAL", "SKY"],
+          "description": "Highlighter marker color."
+        },
+        "startOffset": {
+          "type": "integer",
+          "description": "Start character offset in the source note text, or -1."
+        },
+        "endOffset": {
+          "type": "integer",
+          "description": "End character offset in the source note text, or -1."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Up to 10 tags inherited or added for reviewer filtering."
+        },
+        "mastered": {
+          "type": "boolean",
+          "description": "Whether the student marked this definition as reviewed/mastered."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "subjectId",
+        "noteId",
+        "term",
+        "definition",
+        "highlightColor",
+        "startOffset",
+        "endOffset",
+        "tags",
+        "mastered",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/subjects/{subjectId}": {
+      "schema": { "$ref": "#/entities/Subject" },
+      "description": "User-scoped study subjects."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/StudyNote" },
+      "description": "User-scoped study notes with extracted editable text and photo tags."
+    },
+    "/users/{userId}/definitions/{definitionId}": {
+      "schema": { "$ref": "#/entities/KeyDefinition" },
+      "description": "User-scoped highlighted definitions for subject reviewers."
+    }
+  }
+}
